@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Track your income and expenses with beautiful charts and local storage persistence. Stay on top of your finances effortlessly." />
+  <title>ExpenseIQ — Smart Expense Tracker</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- Background orbs -->
+  <div class="bg-orb orb-1"></div>
+  <div class="bg-orb orb-2"></div>
+  <div class="bg-orb orb-3"></div>
+
+  <!-- ===== HEADER ===== -->
+  <header class="header">
+    <div class="header-inner">
+      <div class="logo">
+        <span class="logo-icon">💸</span>
+        <span class="logo-text">Expense<span class="accent">IQ</span></span>
+      </div>
+      <nav class="header-nav">
+        <button class="nav-btn active" id="nav-dashboard" onclick="showSection('dashboard')">
+          <span class="nav-icon">📊</span> Dashboard
+        </button>
+        <button class="nav-btn" id="nav-transactions" onclick="showSection('transactions')">
+          <span class="nav-icon">📋</span> Transactions
+        </button>
+        <button class="nav-btn" id="nav-analytics" onclick="showSection('analytics')">
+          <span class="nav-icon">📈</span> Analytics
+        </button>
+      </nav>
+      <button class="btn-add-main" id="btn-open-modal" onclick="openModal()">
+        <span>＋</span> Add Entry
+      </button>
+    </div>
+  </header>
+
+  <!-- ===== DASHBOARD SECTION ===== -->
+  <section id="section-dashboard" class="section active">
+    <div class="container">
+      <!-- Summary Cards -->
+      <div class="summary-grid">
+        <div class="summary-card balance-card" id="card-balance">
+          <div class="card-header">
+            <span class="card-label">Total Balance</span>
+            <span class="card-icon balance-icon">💰</span>
+          </div>
+          <div class="card-amount" id="balance-amount">$0.00</div>
+          <div class="card-sub" id="balance-sub">Updated just now</div>
+          <div class="card-glow balance-glow"></div>
+        </div>
+
+        <div class="summary-card income-card">
+          <div class="card-header">
+            <span class="card-label">Total Income</span>
+            <span class="card-icon income-icon">📈</span>
+          </div>
+          <div class="card-amount income-amount" id="income-amount">$0.00</div>
+          <div class="card-sub" id="income-count">0 transactions</div>
+          <div class="card-glow income-glow"></div>
+        </div>
+
+        <div class="summary-card expense-card">
+          <div class="card-header">
+            <span class="card-label">Total Expenses</span>
+            <span class="card-icon expense-icon">📉</span>
+          </div>
+          <div class="card-amount expense-amount" id="expense-amount">$0.00</div>
+          <div class="card-sub" id="expense-count">0 transactions</div>
+          <div class="card-glow expense-glow"></div>
+        </div>
+
+        <div class="summary-card savings-card">
+          <div class="card-header">
+            <span class="card-label">Savings Rate</span>
+            <span class="card-icon savings-icon">🎯</span>
+          </div>
+          <div class="card-amount savings-amount" id="savings-rate">0%</div>
+          <div class="card-sub" id="savings-sub">of income saved</div>
+          <div class="card-glow savings-glow"></div>
+        </div>
+      </div>
+
+      <!-- Charts Row -->
+      <div class="charts-grid">
+        <div class="chart-card" id="chart-card-donut">
+          <div class="chart-card-header">
+            <h2 class="chart-title">Income vs Expenses</h2>
+            <span class="chart-badge">Overview</span>
+          </div>
+          <div class="chart-wrapper">
+            <canvas id="donutChart"></canvas>
+            <div class="chart-center-text" id="donut-center">
+              <span class="center-label">Balance</span>
+              <span class="center-value" id="center-balance">$0</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="chart-card" id="chart-card-bar">
+          <div class="chart-card-header">
+            <h2 class="chart-title">Monthly Overview</h2>
+            <span class="chart-badge">6 Months</span>
+          </div>
+          <div class="chart-wrapper">
+            <canvas id="barChart"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recent Transactions -->
+      <div class="recent-section">
+        <div class="recent-header">
+          <h2 class="section-title">Recent Transactions</h2>
+          <button class="view-all-btn" onclick="showSection('transactions')">View All →</button>
+        </div>
+        <div id="recent-list" class="transaction-list">
+          <div class="empty-state" id="empty-recent">
+            <div class="empty-icon">🪙</div>
+            <h3>No transactions yet</h3>
+            <p>Add your first income or expense to get started</p>
+            <button class="btn-add-first" onclick="openModal()">＋ Add Entry</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== TRANSACTIONS SECTION ===== -->
+  <section id="section-transactions" class="section">
+    <div class="container">
+      <div class="page-header">
+        <h1 class="page-title">All Transactions</h1>
+        <div class="filter-bar">
+          <select id="filter-type" class="filter-select" onchange="renderTransactions()">
+            <option value="all">All Types</option>
+            <option value="income">Income Only</option>
+            <option value="expense">Expenses Only</option>
+          </select>
+          <select id="filter-category" class="filter-select" onchange="renderTransactions()">
+            <option value="all">All Categories</option>
+          </select>
+          <select id="filter-month" class="filter-select" onchange="renderTransactions()">
+            <option value="all">All Time</option>
+          </select>
+          <button class="btn-clear-all" id="btn-clear-all" onclick="clearAllData()">🗑 Clear All</button>
+        </div>
+      </div>
+      <div id="transactions-list" class="transaction-list">
+        <div class="empty-state">
+          <div class="empty-icon">📋</div>
+          <h3>No transactions found</h3>
+          <p>Try adjusting your filters or add new entries</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== ANALYTICS SECTION ===== -->
+  <section id="section-analytics" class="section">
+    <div class="container">
+      <div class="page-header">
+        <h1 class="page-title">Analytics</h1>
+      </div>
+
+      <div class="analytics-grid">
+        <!-- Category Breakdown -->
+        <div class="chart-card analytics-chart-card">
+          <div class="chart-card-header">
+            <h2 class="chart-title">Expense by Category</h2>
+            <span class="chart-badge">Breakdown</span>
+          </div>
+          <div class="chart-wrapper analytics-chart-wrapper">
+            <canvas id="categoryChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Line Chart - Trend -->
+        <div class="chart-card analytics-chart-card">
+          <div class="chart-card-header">
+            <h2 class="chart-title">Balance Trend</h2>
+            <span class="chart-badge">Over Time</span>
+          </div>
+          <div class="chart-wrapper analytics-chart-wrapper">
+            <canvas id="trendChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Top Categories -->
+        <div class="chart-card top-categories-card">
+          <div class="chart-card-header">
+            <h2 class="chart-title">Top Spending Categories</h2>
+            <span class="chart-badge">Ranked</span>
+          </div>
+          <div id="top-categories-list" class="top-cat-list"></div>
+        </div>
+
+        <!-- Monthly stats -->
+        <div class="chart-card monthly-stat-card">
+          <div class="chart-card-header">
+            <h2 class="chart-title">This Month</h2>
+            <span class="chart-badge">Summary</span>
+          </div>
+          <div class="month-stats" id="month-stats"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== ADD ENTRY MODAL ===== -->
+  <div class="modal-backdrop" id="modal-backdrop" onclick="closeModal(event)">
+    <div class="modal" id="modal" role="dialog" aria-labelledby="modal-title" aria-modal="true">
+      <div class="modal-header">
+        <h2 class="modal-title" id="modal-title">Add New Entry</h2>
+        <button class="modal-close" onclick="closeModal()" aria-label="Close modal">✕</button>
+      </div>
+
+      <!-- Type Toggle -->
+      <div class="type-toggle">
+        <button class="type-btn active" id="type-income" onclick="setType('income')">
+          📈 Income
+        </button>
+        <button class="type-btn" id="type-expense" onclick="setType('expense')">
+          📉 Expense
+        </button>
+      </div>
+
+      <form id="entry-form" onsubmit="addEntry(event)">
+        <div class="form-group">
+          <label class="form-label" for="entry-description">Description *</label>
+          <input
+            type="text"
+            id="entry-description"
+            class="form-input"
+            placeholder="e.g. Monthly salary, Coffee, Rent..."
+            required
+            maxlength="60"
+          />
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="entry-amount">Amount ($) *</label>
+            <input
+              type="number"
+              id="entry-amount"
+              class="form-input"
+              placeholder="0.00"
+              step="0.01"
+              min="0.01"
+              required
+            />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="entry-date">Date *</label>
+            <input
+              type="date"
+              id="entry-date"
+              class="form-input"
+              required
+            />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="entry-category">Category *</label>
+          <select id="entry-category" class="form-input form-select" required>
+            <option value="" disabled selected>Select a category</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="entry-note">Note (optional)</label>
+          <textarea
+            id="entry-note"
+            class="form-input form-textarea"
+            placeholder="Any additional details..."
+            maxlength="120"
+            rows="2"
+          ></textarea>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="btn-cancel" onclick="closeModal()">Cancel</button>
+          <button type="submit" class="btn-submit" id="submit-btn">
+            <span id="submit-label">＋ Add Income</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div class="toast" id="toast" role="alert" aria-live="polite"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
